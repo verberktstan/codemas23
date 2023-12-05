@@ -40,14 +40,20 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
 (defn- impossible-colors [{:keys [possible-colors] :as m}]
   (assoc m :impossible-colors (filter (partial some (comp neg? val)) possible-colors)))
 
-(comment
+(defn- sum-possible-game-ids
+  [s]
   (->>
-   (str/split TESTINPUT #"\n")
+   (str/split s #"\n") ; Split lines (by newline char)
    (map split-game-data)
    (map parse-game)
    (map parse-data)
-   (map (partial possible-colors {"red" 12 "green" 13 "blue" 14}))
+   (map (partial possible-colors {"red" 12 "green" 13 "blue" 14})) ; Compare possible colors to n red, green and blue cubes
    (map impossible-colors)
-   (remove (comp seq :impossible-colors))
-   (map :game)
-   (reduce +)))
+   (remove (comp seq :impossible-colors)) ; Remove impossible colors
+   (map :game) ; Find the game id's
+   (reduce +))) ; Sum those id's
+
+(comment
+  (sum-possible-game-ids TESTINPUT)
+  (sum-possible-game-ids (slurp "resources/day2a-input.edn")) ; => 1931
+  )
