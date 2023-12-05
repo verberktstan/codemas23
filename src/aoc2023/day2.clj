@@ -24,15 +24,30 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
         color  (re-find LETTERS s)]
     {color n}))
 
-(defn- parse-data [{:keys [data] :as m}]
+(defn- parse-data
+  "Returns map `m` with the counts of the colors associated with :colors."
+  [{:keys [data] :as m}]
   (let [reveals (str/split data #"; ")
         draws   (map #(str/split % #", ") reveals)
         colors  (map (comp (partial reduce into) (partial map color->map)) draws)]
-    (merge m {:test reveals :draws draws :colors colors})))
+    (merge m {:reveals reveals :draws draws :colors colors})))
+
+(defn- possible-colors
+  "Returns game-data map with :possible-colors, where color counts are subtracted from the given colors map `m`."
+  [m {:keys [colors] :as game-data}]
+  (assoc game-data :possible-colors (map (partial merge-with - m) colors)))
+
+(defn- impossible-colors [{:keys [possible-colors] :as m}]
+  (assoc m :impossible-colors (filter (partial some (comp neg? val)) possible-colors)))
 
 (comment
   (->>
    (str/split TESTINPUT #"\n")
    (map split-game-data)
    (map parse-game)
-   (map parse-data)))
+   (map parse-data)
+   (map (partial possible-colors {"red" 12 "green" 13 "blue" 14}))
+   (map impossible-colors)
+   (remove (comp seq :impossible-colors))
+   (map :game)
+   (reduce +)))
