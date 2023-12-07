@@ -19,18 +19,20 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
   {:game (read-string (re-find DIGITS game))
    :data data})
 
-(defn- color->map [s]
+(defn- color-frequencies [s]
   (let [n     (->> s (re-find DIGITS) read-string)
-        color  (re-find LETTERS s)]
+        color (re-find LETTERS s)]
     {color n}))
 
-(defn- parse-data
-  "Returns map `m` with the counts of the colors associated with :colors."
+(defn- enrich-colors
+  "Returns map `m` with the frequencies of the colors associated with :colors."
   [{:keys [data] :as m}]
   (let [reveals (str/split data #"; ")
         draws   (map #(str/split % #", ") reveals)
-        colors  (map (comp (partial reduce into) (partial map color->map)) draws)]
-    (merge m {:reveals reveals :draws draws :colors colors})))
+        colors  (map (comp (partial reduce into)
+                           (partial map color-frequencies))
+                     draws)]
+    (assoc m :colors colors)))
 
 (defn- possible-colors
   "Returns game-data map with :possible-colors, where color counts are subtracted from the given colors map `m`."
@@ -45,7 +47,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
    (str/split s #"\n") ; Split lines (by newline char)
    (map split-game-data)
    (map parse-game)
-   (map parse-data)))
+   (map enrich-colors)))
 
 (defn- sum-possible-game-ids
   [s]
@@ -57,7 +59,28 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
        (map :game) ; Find the game id's
        (reduce +))) ; Sum those id's
 
+(defn- find-minimum-cubes [{:keys [colors] :as m}]
+  (assoc m
+    :minimum-cubes
+    (apply merge-with max colors)))
+
+(defn- multiply-powers [{:keys [minimum-cubes] :as m}]
+  (assoc m
+    :power
+    (reduce-kv (fn [x _ y] (* x y)) 1 minimum-cubes)))
+
+(defn- sum-powers
+  [s]
+  (->> s
+       prepare-colors
+       (map find-minimum-cubes)
+       (map multiply-powers)
+       (map :power)
+       (reduce + 0)))
+
 (comment
-  (sum-possible-game-ids TESTINPUT)
+  (sum-possible-game-ids TESTINPUT) ; => 8
   (sum-possible-game-ids (slurp "resources/day2a-input.edn")) ; => 1931
-  (prepare-colors TESTINPUT))
+  (sum-powers TESTINPUT) ; => 2286
+  (sum-powers (slurp "resources/day2a-input.edn")) ; => 83105
+  )
