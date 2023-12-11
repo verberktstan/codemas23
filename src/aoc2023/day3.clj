@@ -42,6 +42,16 @@
                (some (complement #{nil \. \0 \1 \2 \3 \4 \5 \6 \7 \8 \9})))
       number)))
 
+(defn- close-gear [lookup]
+  (fn close-gear*
+    [{:keys [positions] :as props}]
+    (when-let [close (->> positions
+                          (mapcat #(map (comp (partial find lookup) (partial mapv + %)) DIRECTIONS))
+                          (filter identity)
+                          (filter (comp #{\*} val))
+                          seq)]
+      (assoc props :close-gear (first close)))))
+
 (defn- collect-numbers [lookup]
   (->> lookup
        (sort-by key)
@@ -57,4 +67,15 @@
     (let [lookup (->> reader line-seq position-pairs)
           numbers (collect-numbers lookup)]
       (sum part-number? lookup numbers))) ; 512794
+
+  (with-open [reader (io/reader "resources/day3a-testinput.txt")]
+    (let [lookup (->> reader line-seq position-pairs)
+          numbers (->> lookup collect-numbers)]
+      (->> numbers
+           (keep (close-gear lookup))
+           (group-by :close-gear)
+           (filter (comp #(> % 1) count val)) ; Pick the ones where more than 1 number is adjacent to a gear.
+           vals
+           (map #(reduce * (map :number %))) ; Multiply the gear ratios
+           (reduce +)))) ; 467835
   )
