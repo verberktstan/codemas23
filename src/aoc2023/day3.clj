@@ -42,15 +42,15 @@
                (some (complement #{nil \. \0 \1 \2 \3 \4 \5 \6 \7 \8 \9})))
       number)))
 
-(defn- close-gear [lookup]
-  (fn close-gear*
+(defn- adjacent-gear [lookup]
+  (fn adjacent-gear*
     [{:keys [positions] :as props}]
     (when-let [close (->> positions
                           (mapcat #(map (comp (partial find lookup) (partial mapv + %)) DIRECTIONS))
                           (filter identity)
                           (filter (comp #{\*} val))
                           seq)]
-      (assoc props :close-gear (first close)))))
+      (assoc props :adjacent-gear (first close)))))
 
 (defn- collect-numbers [lookup]
   (->> lookup
@@ -64,9 +64,9 @@
 
 (defn- find-gear-ratios [lookup numbers]
   (->> numbers
-       (keep (close-gear lookup)) ; Keep the numbers that are adjacent to a gear
-       (group-by :close-gear)
-       (filter (comp #(> % 1) count val)) ; Pick the ones where more than 1 number is adjacent to a gear.
+       (keep (adjacent-gear lookup)) ; Keep the numbers that are adjacent to a gear
+       (group-by :adjacent-gear) ; Group them by their adjacent gear
+       (filter (comp pos? dec count val)) ; Pick the ones where more than 1 number is adjacent to a gear.
        vals))
 
 (defn- multiply-and-sum-gear-ratios [gear-ratios]
