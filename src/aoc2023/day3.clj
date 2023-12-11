@@ -62,20 +62,26 @@
 (defn- sum [predicate lookup numbers]
   (->> numbers (keep (predicate lookup)) (reduce +)))
 
+(defn- find-gear-ratios [lookup numbers]
+  (->> numbers
+       (keep (close-gear lookup)) ; Keep the numbers that are adjacent to a gear
+       (group-by :close-gear)
+       (filter (comp #(> % 1) count val)) ; Pick the ones where more than 1 number is adjacent to a gear.
+       vals))
+
+(defn- multiply-and-sum-gear-ratios [gear-ratios]
+  (->> gear-ratios
+       (map #(reduce * (map :number %))) ; Multiply the gear ratios
+       (reduce +)))
+
 (comment
   (with-open [reader (io/reader "resources/day3a-input.txt")]
-    (let [lookup (->> reader line-seq position-pairs)
+    (let [lookup  (->> reader line-seq position-pairs)
           numbers (collect-numbers lookup)]
       (sum part-number? lookup numbers))) ; 512794
 
-  (with-open [reader (io/reader "resources/day3a-testinput.txt")]
-    (let [lookup (->> reader line-seq position-pairs)
-          numbers (->> lookup collect-numbers)]
-      (->> numbers
-           (keep (close-gear lookup))
-           (group-by :close-gear)
-           (filter (comp #(> % 1) count val)) ; Pick the ones where more than 1 number is adjacent to a gear.
-           vals
-           (map #(reduce * (map :number %))) ; Multiply the gear ratios
-           (reduce +)))) ; 467835
+  (with-open [reader (io/reader "resources/day3a-input.txt")]
+    (let [lookup      (->> reader line-seq position-pairs)
+          gear-ratios (->> lookup collect-numbers (find-gear-ratios lookup))]
+      (multiply-and-sum-gear-ratios gear-ratios))) ; 67779080 
   )
