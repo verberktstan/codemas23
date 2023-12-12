@@ -1,12 +1,7 @@
 (ns aoc2023.day2
-  (:require [clojure.string :as str]))
-
-(def TESTINPUT
-  "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
-Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
-Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
-Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
+  (:require [clojure.edn :as edn]
+            [clojure.string :as str]
+            [clojure.test :as t]))
 
 (defn- split-game-data [s]
   (some-> s (str/split #": ")))
@@ -16,7 +11,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
 (def LETTERS #"[a-z]+")
 
 (defn- parse-game [[game data]]
-  {:game (read-string (re-find DIGITS game))
+  {:game (edn/read-string (re-find DIGITS game))
    :data data})
 
 (defn- color-frequencies [s]
@@ -36,8 +31,9 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
 
 (defn- possible-colors
   "Returns game-data map with :possible-colors, where color counts are subtracted from the given colors map `m`."
-  [m {:keys [colors] :as game-data}]
-  (assoc game-data :possible-colors (map (partial merge-with - m) colors)))
+  [{:keys [colors] :as game-data}]
+  (let [m {"red" 12 "green" 13 "blue" 14}]
+    (assoc game-data :possible-colors (map (partial merge-with - m) colors))))
 
 (defn- impossible-colors [{:keys [possible-colors] :as m}]
   (assoc m :impossible-colors (filter (partial some (comp neg? val)) possible-colors)))
@@ -53,11 +49,16 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
   [s]
   (->> s
        prepare-colors
-       (map (partial possible-colors {"red" 12 "green" 13 "blue" 14})) ; Compare possible colors to n red, green and blue cubes
+       (map possible-colors) ; Compare possible colors to n red, green and blue cubes
        (map impossible-colors)
        (remove (comp seq :impossible-colors)) ; Remove impossible colors
        (map :game) ; Find the game id's
        (reduce +))) ; Sum those id's
+
+(t/deftest day2a
+  (t/are [result file] (= result (-> file slurp sum-possible-game-ids))
+    8    "resources/day2a-testinput.txt"
+    1931 "resources/day2a-input.txt"))
 
 (defn- find-minimum-cubes [{:keys [colors] :as m}]
   (assoc m
@@ -78,9 +79,10 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green")
        (map :power)
        (reduce + 0)))
 
-(comment
-  (sum-possible-game-ids TESTINPUT) ; => 8
-  (sum-possible-game-ids (slurp "resources/day2a-input.edn")) ; => 1931
-  (sum-powers TESTINPUT) ; => 2286
-  (sum-powers (slurp "resources/day2a-input.edn")) ; => 83105
-  )
+(t/deftest day2b
+  (t/are [result file] (= result (-> file slurp sum-powers))
+    2286  "resources/day2a-testinput.txt"
+    83105 "resources/day2a-input.txt"))
+
+#_(t/run-tests) ; {:test 2, :pass 4, :fail 0, :error 0, :type :summary} 
+

@@ -1,7 +1,7 @@
 (ns aoc2023.day3
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.test :as t]))
 
 (defn- position-pairs
   "Returns a map with the characters keyed by their x/y position.
@@ -74,14 +74,20 @@
        (map #(reduce * (map :number %))) ; Multiply the gear ratios
        (reduce +)))
 
-(comment
-  (with-open [reader (io/reader "resources/day3a-input.txt")]
-    (let [lookup  (->> reader line-seq position-pairs)
-          numbers (collect-numbers lookup)]
-      (sum part-number? lookup numbers))) ; 512794
+(t/deftest day3a
+  (t/are [result file]
+         (= result (with-open [rdr (io/reader file)]
+                     (let [lookup (->> rdr line-seq position-pairs)]
+                       (sum part-number? lookup (collect-numbers lookup)))))
+    4361   "resources/day3a-testinput.txt"
+    512794 "resources/day3a-input.txt"))
 
-  (with-open [reader (io/reader "resources/day3a-input.txt")]
-    (let [lookup      (->> reader line-seq position-pairs)
-          gear-ratios (->> lookup collect-numbers (find-gear-ratios lookup))]
-      (multiply-and-sum-gear-ratios gear-ratios))) ; 67779080 
-  )
+(t/deftest day3b
+  (t/are [result file]
+         (= result (with-open [rdr (io/reader file)]
+                     (let [lookup (->> rdr line-seq position-pairs)]
+                       (->> lookup collect-numbers (find-gear-ratios lookup) multiply-and-sum-gear-ratios))))
+    467835   "resources/day3a-testinput.txt"
+    67779080 "resources/day3a-input.txt"))
+
+#_(t/run-tests) ; {:test 2, :pass 4, :fail 0, :error 0, :type :summary} 

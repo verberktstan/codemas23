@@ -1,56 +1,39 @@
 (ns aoc2023.day1
-  (:require [clojure.string :as str]))
+  (:require [clojure.edn :as edn]
+            [clojure.string :as str]
+            [clojure.test :as t]))
 
-(def test-input "1abc22
-pqr3stu8vwx
-a1b2c3d4e5f
-unknown
-treb7uchet")
-
-(def test-input2 "two1nine
-eightwothree
-abcone2threexyz
-xtwone3four
-4nineeightseven2
-zoneight234
-7pqrstsixteen")
-
-(defn- digits1 [coll]
-  (re-seq #"[\d.]" coll))
+(def digits1 (partial re-seq #"[\d.]"))
 
 (defn- parse-digit [s]
   (let [idx (.indexOf ["zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine"] s)]
     (when-not (neg? idx) (str idx))))
 
-(defn- digits2 [coll]
-  (->> coll
+(defn- digits2
+  "Returns a sequence of parsed digits.
+  e.g (digits2 'one2three') => [1 2 3]"
+  [s]
+  (->> s
        (re-seq #"(?=(one|two|three|four|five|six|seven|eight|nine))|[\d.]")
        (mapcat (partial remove str/blank?))
        (map #(or (parse-digit %) %))))
 
-(defn split-lines [s]
-  (when s (str/split s #"\n")))
+(defn- sum-digits
+  "Returns the sum of all the digits found by function f in string s."
+  [f s]
+  (->> s
+       str/split-lines
+       (map f)
+       (filter seq)
+       (map (juxt first last))
+       (map (partial apply str))
+       (map edn/read-string)
+       (apply +)))
 
-(defn sum-digits [f s]
-  (let [coll (map f (split-lines s))]
-    (->> coll
-         (filter seq)
-         (filter identity)
-         (map #(vector (first %) (last %)))
-         (map (partial apply str))
-         (map read-string)
-         (apply +))))
+(t/deftest day1
+  (t/are [result f file] (= result (->> file slurp (sum-digits f)))
+    142   digits1 "resources/day1a-testinput.txt"
+    55816 digits1 "resources/day1a-input.txt"
+    54980 digits2 "resources/day1a-input.txt"))
 
-(comment
-  (digits1 "1abc23")
-  (digits1 "abc")
-  (digits2 "one23")
-
-  (parse-digit 1 #_"one")
-
-  (sum-digits digits1 test-input)
-  (sum-digits digits2 test-input2)
-
-  (sum-digits digits1 (slurp "resources/day1a-input.edn")) ; => 55816 
-  (sum-digits digits2 (slurp "resources/day1a-input.edn")) ; => 54980 
-  )
+#_(t/run-tests) ; {:test 1, :pass 3, :fail 0, :error 0, :type :summary}
