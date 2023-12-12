@@ -1,5 +1,6 @@
 (ns aoc2023.day1
   (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]))
 
@@ -19,10 +20,9 @@
        (map #(or (parse-digit %) %))))
 
 (defn- sum-digits
-  "Returns the sum of all the digits found by function f in string s."
-  [f s]
-  (->> s
-       str/split-lines
+  "Returns the sum of all the digits found by function f in lines."
+  [f lines]
+  (->> lines
        (map f)
        (filter seq)
        (map (juxt first last))
@@ -30,8 +30,12 @@
        (map edn/read-string)
        (apply +)))
 
+(defn with-lines [file f]
+  (with-open [reader (io/reader file)]
+    (-> reader line-seq f)))
+
 (t/deftest day1
-  (t/are [result f file] (= result (->> file slurp (sum-digits f)))
+  (t/are [result f file] (-> file (with-lines (partial sum-digits f)) (= result))
     142   digits1 "resources/day1a-testinput.txt"
     55816 digits1 "resources/day1a-input.txt"
     54980 digits2 "resources/day1a-input.txt"))

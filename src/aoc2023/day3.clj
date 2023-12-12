@@ -1,6 +1,6 @@
 (ns aoc2023.day3
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
+  (:require [aoc2023.day1 :refer [with-lines]]
+            [clojure.edn :as edn]
             [clojure.test :as t]))
 
 (defn- position-pairs
@@ -76,17 +76,19 @@
 
 (t/deftest day3a
   (t/are [result file]
-         (= result (with-open [rdr (io/reader file)]
-                     (let [lookup (->> rdr line-seq position-pairs)]
-                       (sum part-number? lookup (collect-numbers lookup)))))
+         (-> file
+             (with-lines (comp #(sum part-number? % (collect-numbers %)) position-pairs))
+             (= result))
     4361   "resources/day3a-testinput.txt"
     512794 "resources/day3a-input.txt"))
 
 (t/deftest day3b
   (t/are [result file]
-         (= result (with-open [rdr (io/reader file)]
-                     (let [lookup (->> rdr line-seq position-pairs)]
-                       (->> lookup collect-numbers (find-gear-ratios lookup) multiply-and-sum-gear-ratios))))
+         (-> file
+             (with-lines (comp multiply-and-sum-gear-ratios
+                               #(->> % collect-numbers (find-gear-ratios %))
+                               position-pairs))
+             (= result))
     467835   "resources/day3a-testinput.txt"
     67779080 "resources/day3a-input.txt"))
 

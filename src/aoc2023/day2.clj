@@ -1,5 +1,6 @@
 (ns aoc2023.day2
-  (:require [clojure.edn :as edn]
+  (:require [aoc2023.day1 :refer [with-lines]]
+            [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.test :as t]))
 
@@ -38,16 +39,15 @@
 (defn- impossible-colors [{:keys [possible-colors] :as m}]
   (assoc m :impossible-colors (filter (partial some (comp neg? val)) possible-colors)))
 
-(defn- prepare-colors [s]
-  (->>
-   (str/split s #"\n") ; Split lines (by newline char)
-   (map split-game-data)
-   (map parse-game)
-   (map enrich-colors)))
+(defn- prepare-colors [lines]
+  (->> lines
+       (map split-game-data)
+       (map parse-game)
+       (map enrich-colors)))
 
 (defn- sum-possible-game-ids
-  [s]
-  (->> s
+  [lines]
+  (->> lines
        prepare-colors
        (map possible-colors) ; Compare possible colors to n red, green and blue cubes
        (map impossible-colors)
@@ -56,7 +56,7 @@
        (reduce +))) ; Sum those id's
 
 (t/deftest day2a
-  (t/are [result file] (= result (-> file slurp sum-possible-game-ids))
+  (t/are [result file] (-> file (with-lines sum-possible-game-ids) (= result))
     8    "resources/day2a-testinput.txt"
     1931 "resources/day2a-input.txt"))
 
@@ -80,7 +80,7 @@
        (reduce + 0)))
 
 (t/deftest day2b
-  (t/are [result file] (= result (-> file slurp sum-powers))
+  (t/are [result file] (-> file (with-lines sum-powers) (= result))
     2286  "resources/day2a-testinput.txt"
     83105 "resources/day2a-input.txt"))
 
