@@ -7,7 +7,7 @@
 (defn- parse-card
   "Returns a map with the :card, :winning-nums and :my-nums parsed from string s"
   [s]
-  {:card (some->> s (re-find #"Card [\d]+\:") (re-find #"\d+") edn/read-string)
+  {:card (some->> s (re-find #"Card +[\d]+\:") (re-find #"\d+") edn/read-string)
    :winning-nums (some->> s (re-find #"\:[ \d]+\|") (re-seq #"\d+") set)
    :my-nums (some->> s (re-find #"\|[ \d]+") (re-seq #"\d+") set)})
 
@@ -49,7 +49,7 @@
 
 (t/deftest day4b
   (t/are [result file] (= result (-> file (with-lines (comp sum-frequencies duplicate-winning-card-frequencies))))
-    30 "resources/day4a-testinput.txt"
-    #_#_3110653 "resources/day4a-input.txt"))
+    30      "resources/day4a-testinput.txt"
+    5132675 "resources/day4a-input.txt"))
 
-#_(t/run-tests) ; {:test 2, :pass 3, :fail 0, :error 0, :type :summary} 
+#_(t/run-tests) ; {:error 0, :fail 0, :pass 4, :test 2, :type :summary}
