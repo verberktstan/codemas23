@@ -30,12 +30,10 @@
        (map edn/read-string)
        (apply +)))
 
-(t/deftest sum-digits-test
-  (t/are [result f file] (= result (sum-digits f (slurp file)))
+(t/deftest day1
+  (t/are [result f file] (= result (->> file slurp (sum-digits f)))
     142   digits1 "resources/day1a-testinput.txt"
     55816 digits1 "resources/day1a-input.txt"
     54980 digits2 "resources/day1a-input.txt"))
 
-(comment
-  (t/run-tests) ; {:test 1, :pass 3, :fail 0, :error 0, :type :summary}
-  )
+#_(t/run-tests) ; {:test 1, :pass 3, :fail 0, :error 0, :type :summary}
